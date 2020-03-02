@@ -14,6 +14,9 @@ use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
 use frontend\models\ContactForm;
+use frontend\models\Article;
+use frontend\models\Category;
+
 
 
 /**
@@ -75,7 +78,19 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+
+        $data = Article::getAll(2);
+        $popular = Article::getPopular();
+        $recent = Article::getRecent();
+        $categories = Category::getAllCategories();
+
+        return $this->render('index', [
+             'articles' => $data['articles'],
+             'pagination' => $data['pagination'],
+             'popular' => $popular,
+             'recent' => $recent,
+             'categories' => $categories
+        ]);
     }
 
     /**
@@ -83,35 +98,7 @@ class SiteController extends Controller
      *
      * @return mixed
      */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        } else {
-            $model->password = '';
-
-            return $this->render('login', [
-                'model' => $model,
-            ]);
-        }
-    }
-
-    /**
-     * Logs out the current user.
-     *
-     * @return mixed
-     */
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
+    
 
     /**
      * Displays contact page.
@@ -146,23 +133,46 @@ class SiteController extends Controller
         return $this->render('about');
     }
 
+    public function actionView($id)
+    {
+        $article = Article::findOne($id);
+
+        $popular = Article::getPopular();
+        $recent = Article::getRecent();
+        $categories = Category::getAllCategories();
+
+        return $this->render('single', [
+            'article' => $article,
+            'popular' => $popular,
+            'recent' => $recent,
+            'categories' => $categories
+        ]);
+    }
+
+    public function actionCategory($id)
+    {
+
+        $data = Category::getAllCategoryArticles($id);
+        $popular = Article::getPopular();
+        $recent = Article::getRecent();
+        $categories = Category::getAllCategories();
+
+        return $this->render('category', [
+             'articles' => $data['articles'],
+             'pagination' => $data['pagination'],
+             'popular' => $popular,
+             'recent' => $recent,
+             'categories' => $categories
+        ]);
+
+    }
+
     /**
      * Signs user up.
      *
      * @return mixed
      */
-    public function actionSignup()
-    {
-        $model = new SignupForm();
-        if ($model->load(Yii::$app->request->post()) && $model->signup()) {
-            Yii::$app->session->setFlash('success', 'Thank you for registration. Please check your inbox for verification email.');
-            return $this->goHome();
-        }
-
-        return $this->render('signup', [
-            'model' => $model,
-        ]);
-    }
+    
 
     /**
      * Requests password reset.
@@ -258,4 +268,5 @@ class SiteController extends Controller
             'model' => $model
         ]);
     }
+
 }
